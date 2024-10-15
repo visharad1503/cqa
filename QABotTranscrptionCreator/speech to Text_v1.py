@@ -1,12 +1,4 @@
 # Databricks notebook source
-# scriptpath = 'difkvusbankscript'
-# scriptarchievepath=''
-# #audiopath='difkvusbankaudio'  #do not use this path
-# audiopath=''
-# scope = 'aw-key-vault-secrets'
-
-# COMMAND ----------
-
 # MAGIC %sh
 # MAGIC python  /Workspace/DIFPlatform/QABot_TranscriptCreator/python-client/setup.py install
 
@@ -31,11 +23,86 @@ import sys
 import requests
 import time
 import swagger_client
+import json
 
-scriptpath = 'difkvusbankscript'
-scriptarchievepath=''
-audiopath='difkvusbankaudio'
-scope = 'aw-key-vault-secrets'
+
+#####################################################
+
+workspaceUrl = spark.conf.get('spark.databricks.workspaceUrl')
+print(workspaceUrl)
+
+if '2317951018196210' in workspaceUrl:
+  env = 'prod'
+elif '440246583814818' in workspaceUrl:
+  env = 'hive_metastore'
+elif '7386318671908095' in workspaceUrl:
+  env = 'dev'
+elif '508284401728112' in workspaceUrl:
+  env = 'qa'
+elif '8490468970670096' in workspaceUrl:
+  env = 'stg'
+else:
+  print('no valid workspace')
+
+print(env)
+if env == 'no valid workspace':
+    raise ValueError("No valid workspace")
+
+###########################################
+
+dbutils.widgets.text("account_name","usbank")
+account_name=dbutils.widgets.get("account_name")
+
+component_name='Audio'
+
+query = f"""
+SELECT account_id
+FROM {env}_genai_configuration.genai_audit_config.accounts
+WHERE lower(accountName) = lower('{account_name}')
+"""
+
+result = spark.sql(query).collect()
+account_id=result[0]['account_id']
+
+query = f"""
+SELECT 
+    c.component_id,
+    p.timeout_seconds,
+    p.parameter_type,
+    p.num_workers
+FROM 
+    {env}_genai_configuration.genai_audit_config.component c
+JOIN 
+    {env}_genai_configuration.genai_audit_config.parameter p
+ON 
+    c.component_id = p.ComponentId
+WHERE 
+    c.component_name = '{component_name}' and p.AccountId = '{account_id}'
+"""
+df = spark.sql(query)
+result = df.collect()[0]
+ComponentId = result['component_id']
+
+# Query the table to get the ParameterJson
+query = f"""
+SELECT ParameterJson
+FROM {env}_genai_configuration.genai_audit_config.parameter
+WHERE ComponentId = '{ComponentId}' AND AccountId = '{account_id}' and IsEnable='True'
+"""
+
+# Execute the query and get the result
+parameter_json_df = spark.sql(query)
+parameter_json_str = parameter_json_df.collect()[0]['ParameterJson']
+
+# Parse the JSON string into a dictionary
+parameters = json.loads(parameter_json_str)
+print(parameters)
+
+scriptpath = parameters['scriptpath']
+audiopath=parameters['audiopath']
+scope = parameters['scope']
+
+##################################################
 
 scriptpath = dbutils.secrets.get(scope, key=scriptpath)
 audiopath=dbutils.secrets.get(scope, key=audiopath) 
