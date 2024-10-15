@@ -1,15 +1,31 @@
 # Databricks notebook source
+pip install wheel
+
+# COMMAND ----------
+
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
+pip install check-wheel-contents
+
+# COMMAND ----------
+
 # MAGIC %sh
-# MAGIC python  /Workspace/DIFPlatform/QABot_TranscriptCreator/python-client/setup.py install
+# MAGIC python /Workspace/Users/visharad.sharma@digitalservicesonlinedso.onmicrosoft.com/QABot_1/python-client/setup.py bdist_wheel 
 
 # COMMAND ----------
 
-# MAGIC %pip install /Workspace/DIFPlatform/QABot_TranscriptCreator/python-client
-# MAGIC
+# MAGIC %sh
+# MAGIC python  /Workspace/Users/visharad.sharma@digitalservicesonlinedso.onmicrosoft.com/QABot/python-client/setup.py install
 
 # COMMAND ----------
 
-# MAGIC %pip install requests
+# MAGIC %pip install swagger-client
+
+# COMMAND ----------
+
+# MAGIC %pip install /Workspace/Users/visharad.sharma@digitalservicesonlinedso.onmicrosoft.com/QABot/python-client
 # MAGIC
 
 # COMMAND ----------
@@ -18,110 +34,49 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
+import swagger_client
+
+# COMMAND ----------
+
+# MAGIC %pip install requests
+# MAGIC
+
+# COMMAND ----------
+
+#!/usr/bin/env python
+# coding: utf-8
+
+# Copyright (c) Microsoft. All rights reserved.
+# Licensed under the MIT license. See LICENSE.md file in the project root for full license information.
+
 import logging
 import sys
 import requests
 import time
 import swagger_client
-import json
-
-
-#####################################################
-
-workspaceUrl = spark.conf.get('spark.databricks.workspaceUrl')
-print(workspaceUrl)
-
-if '2317951018196210' in workspaceUrl:
-  env = 'prod'
-elif '440246583814818' in workspaceUrl:
-  env = 'hive_metastore'
-elif '7386318671908095' in workspaceUrl:
-  env = 'dev'
-elif '508284401728112' in workspaceUrl:
-  env = 'qa'
-elif '8490468970670096' in workspaceUrl:
-  env = 'stg'
-else:
-  print('no valid workspace')
-
-print(env)
-if env == 'no valid workspace':
-    raise ValueError("No valid workspace")
-
-###########################################
-
-dbutils.widgets.text("account_name","usbank")
-account_name=dbutils.widgets.get("account_name")
-
-component_name='Audio'
-
-query = f"""
-SELECT account_id
-FROM {env}_genai_configuration.genai_audit_config.accounts
-WHERE lower(accountName) = lower('{account_name}')
-"""
-
-result = spark.sql(query).collect()
-account_id=result[0]['account_id']
-
-query = f"""
-SELECT 
-    c.component_id,
-    p.timeout_seconds,
-    p.parameter_type,
-    p.num_workers
-FROM 
-    {env}_genai_configuration.genai_audit_config.component c
-JOIN 
-    {env}_genai_configuration.genai_audit_config.parameter p
-ON 
-    c.component_id = p.ComponentId
-WHERE 
-    c.component_name = '{component_name}' and p.AccountId = '{account_id}'
-"""
-df = spark.sql(query)
-result = df.collect()[0]
-ComponentId = result['component_id']
-
-# Query the table to get the ParameterJson
-query = f"""
-SELECT ParameterJson
-FROM {env}_genai_configuration.genai_audit_config.parameter
-WHERE ComponentId = '{ComponentId}' AND AccountId = '{account_id}' and IsEnable='True'
-"""
-
-# Execute the query and get the result
-parameter_json_df = spark.sql(query)
-parameter_json_str = parameter_json_df.collect()[0]['ParameterJson']
-
-# Parse the JSON string into a dictionary
-parameters = json.loads(parameter_json_str)
-print(parameters)
-
-scriptpath = parameters['scriptpath']
-audiopath=parameters['audiopath']
-scope = parameters['scope']
-
-##################################################
-
-scriptpath = dbutils.secrets.get(scope, key=scriptpath)
-audiopath=dbutils.secrets.get(scope, key=audiopath) 
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
         format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p %Z")
 
 # Your subscription key and region for the speech service
-SUBSCRIPTION_KEY = "8e0fb1a3ca4e4916a2fed314d9de2b24"
+SUBSCRIPTION_KEY = " "
 SERVICE_REGION = "eastus"
 
 NAME = "voice_to_text"
 DESCRIPTION = "voice to text description"
 
 LOCALE = "en-US"
-RECORDINGS_CONTAINER_URI =audiopath
+# RECORDINGS_BLOB_URI = "<Your SAS Uri to the recording>"
+
+# Provide the uri of a container with audio files for transcribing all of them
+# with a single request. At least 'read' and 'list' (rl) permissions are required.
+#Vish
+
+RECORDINGS_CONTAINER_URI = ""
 
 # Set model information when doing transcription with custom models
 MODEL_REFERENCE = None  # guid of a custom model
+
 
 def transcribe_from_single_blob(uri, properties):
     """
@@ -137,6 +92,7 @@ def transcribe_from_single_blob(uri, properties):
     )
 
     return transcription_definition
+
 
 def transcribe_with_custom_model(client, uri, properties):
     """
@@ -230,18 +186,47 @@ def transcribe():
 
     # create an instance of the transcription api class
     api = swagger_client.CustomSpeechTranscriptionsApi(api_client=client)
-    # Specify transcription properties by passing a dict to the properties parameter.    
+
+    # Specify transcription properties by passing a dict to the properties parameter. See
+    # https://learn.microsoft.com/azure/cognitive-services/speech-service/batch-transcription-create?pivots=rest-api#request-configuration-options
+    # for supported parameters.
     properties = swagger_client.TranscriptionProperties()
-    #Visharad: script as of now go ahead. Need to think in future.
-    properties.destination_container_url = scriptpath
+    # properties.word_level_timestamps_enabled = True
+    # properties.display_form_word_level_timestamps_enabled = True
+    # properties.punctuation_mode = "DictatedAndAutomatic"
+    # properties.profanity_filter_mode = "Masked"
+    properties.destination_container_url = ""
+    # properties.time_to_live = "PT1H"
+
+    # uncomment the following block to enable and configure speaker separation
+    # properties.diarization_enabled = True
+    # properties.diarization = swagger_client.DiarizationProperties(
+    #     swagger_client.DiarizationSpeakersProperties(min_count=1, max_count=5))
+
+    # uncomment the following block to enable and configure language identification prior to transcription. Available modes are "single" and "continuous".
+    # properties.language_identification = swagger_client.LanguageIdentificationProperties(mode="single", candidate_locales=["en-US", "ja-JP"])
+
+    # Use base models for transcription. Comment this block if you are using a custom model.
+    #Vish
+    #transcription_definition = transcribe_from_single_blob(RECORDINGS_BLOB_URI, properties)
+
+    # Uncomment this block to use custom models for transcription.
+    # transcription_definition = transcribe_with_custom_model(client, RECORDINGS_BLOB_URI, properties)
+
+    # uncomment the following block to enable and configure language identification prior to transcription
+    # Uncomment this block to transcribe all files from a container.
     #vish
     transcription_definition = transcribe_from_container(RECORDINGS_CONTAINER_URI, properties)
+
     created_transcription, status, headers = api.transcriptions_create_with_http_info(transcription=transcription_definition)
+
     # get the transcription Id from the location URI
     transcription_id = headers["location"].split("/")[-1]
+
     # Log information about the created transcription. If you should ask for support, please
     # include this information.
     logging.info(f"Created new transcription with id '{transcription_id}' in region {SERVICE_REGION}")
+
     logging.info("Checking status.")
 
     completed = False
@@ -276,3 +261,4 @@ def transcribe():
 
 if __name__ == "__main__":
     transcribe()
+
