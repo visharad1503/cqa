@@ -1,0 +1,5 @@
+swagger_client.egg-info/PKG-INFO
+swagger_client.egg-info/SOURCES.txt
+swagger_client.egg-info/dependency_links.txt
+swagger_client.egg-info/requires.txt
+swagger_client.egg-info/top_level.txt
