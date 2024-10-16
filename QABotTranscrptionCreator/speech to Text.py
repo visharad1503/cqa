@@ -12,12 +12,12 @@ pip install check-wheel-contents
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC python /Workspace/DIFPlatform/QABotTranscrptionCreator1/python-client/setup.py bdist_wheel 
+# MAGIC python /Workspace/DIFPlatform/QABotTranscrptionCreator/python-client/setup.py bdist_wheel 
 
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC python  /Workspace/DIFPlatform/QABotTranscrptionCreator1/python-client/setup.py install
+# MAGIC python  /Workspace/DIFPlatform/QABotTranscrptionCreator/python-client/setup.py install
 
 # COMMAND ----------
 
@@ -29,7 +29,7 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
-# MAGIC %pip install /Workspace/DIFPlatform/QABotTranscrptionCreator1/python-client
+# MAGIC %pip install /Workspace/DIFPlatform/QABotTranscrptionCreator/python-client
 # MAGIC
 
 # COMMAND ----------
