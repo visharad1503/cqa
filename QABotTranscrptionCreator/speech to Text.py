@@ -12,12 +12,12 @@ pip install check-wheel-contents
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC python /Workspace/Users/visharad.sharma@digitalservicesonlinedso.onmicrosoft.com/QABot_1/python-client/setup.py bdist_wheel 
+# MAGIC python /Workspace/DIFPlatform/QABotTranscrptionCreator1/python-client/setup.py bdist_wheel 
 
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC python  /Workspace/Users/visharad.sharma@digitalservicesonlinedso.onmicrosoft.com/QABot/python-client/setup.py install
+# MAGIC python  /Workspace/DIFPlatform/QABotTranscrptionCreator1/python-client/setup.py install
 
 # COMMAND ----------
 
@@ -25,7 +25,11 @@ pip install check-wheel-contents
 
 # COMMAND ----------
 
-# MAGIC %pip install /Workspace/Users/visharad.sharma@digitalservicesonlinedso.onmicrosoft.com/QABot/python-client
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
+# MAGIC %pip install /Workspace/DIFPlatform/QABotTranscrptionCreator1/python-client
 # MAGIC
 
 # COMMAND ----------
@@ -34,7 +38,8 @@ dbutils.library.restartPython()
 
 # COMMAND ----------
 
-import swagger_client
+# MAGIC %pip install swagger-client
+# MAGIC import swagger_client
 
 # COMMAND ----------
 
@@ -58,8 +63,8 @@ import swagger_client
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
         format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p %Z")
 
-# Your subscription key and region for the speech service
-SUBSCRIPTION_KEY = " "
+# Vish: Your subscription key and region for the speech service
+SUBSCRIPTION_KEY = ""
 SERVICE_REGION = "eastus"
 
 NAME = "voice_to_text"
@@ -68,9 +73,8 @@ DESCRIPTION = "voice to text description"
 LOCALE = "en-US"
 # RECORDINGS_BLOB_URI = "<Your SAS Uri to the recording>"
 
-# Provide the uri of a container with audio files for transcribing all of them
-# with a single request. At least 'read' and 'list' (rl) permissions are required.
-#Vish
+
+#Vish : recoding container url
 
 RECORDINGS_CONTAINER_URI = ""
 
@@ -187,35 +191,14 @@ def transcribe():
     # create an instance of the transcription api class
     api = swagger_client.CustomSpeechTranscriptionsApi(api_client=client)
 
-    # Specify transcription properties by passing a dict to the properties parameter. See
-    # https://learn.microsoft.com/azure/cognitive-services/speech-service/batch-transcription-create?pivots=rest-api#request-configuration-options
     # for supported parameters.
     properties = swagger_client.TranscriptionProperties()
-    # properties.word_level_timestamps_enabled = True
-    # properties.display_form_word_level_timestamps_enabled = True
-    # properties.punctuation_mode = "DictatedAndAutomatic"
-    # properties.profanity_filter_mode = "Masked"
+    # vish: script container url
+   
     properties.destination_container_url = ""
     # properties.time_to_live = "PT1H"
 
-    # uncomment the following block to enable and configure speaker separation
-    # properties.diarization_enabled = True
-    # properties.diarization = swagger_client.DiarizationProperties(
-    #     swagger_client.DiarizationSpeakersProperties(min_count=1, max_count=5))
-
-    # uncomment the following block to enable and configure language identification prior to transcription. Available modes are "single" and "continuous".
-    # properties.language_identification = swagger_client.LanguageIdentificationProperties(mode="single", candidate_locales=["en-US", "ja-JP"])
-
-    # Use base models for transcription. Comment this block if you are using a custom model.
-    #Vish
-    #transcription_definition = transcribe_from_single_blob(RECORDINGS_BLOB_URI, properties)
-
-    # Uncomment this block to use custom models for transcription.
-    # transcription_definition = transcribe_with_custom_model(client, RECORDINGS_BLOB_URI, properties)
-
-    # uncomment the following block to enable and configure language identification prior to transcription
-    # Uncomment this block to transcribe all files from a container.
-    #vish
+    # vish:
     transcription_definition = transcribe_from_container(RECORDINGS_CONTAINER_URI, properties)
 
     created_transcription, status, headers = api.transcriptions_create_with_http_info(transcription=transcription_definition)
