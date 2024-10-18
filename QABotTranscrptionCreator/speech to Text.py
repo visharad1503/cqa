@@ -63,7 +63,7 @@ import swagger_client
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
         format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p %Z")
 
-# Vish: Your subscription key and region for the speech service
+# Vish: Your subscription key and region for the speech  service
 SUBSCRIPTION_KEY = ""
 SERVICE_REGION = "eastus"
 
