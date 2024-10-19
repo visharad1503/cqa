@@ -155,7 +155,7 @@ from pyspark.sql.functions import *
 def dbWrite(dbParameters,tableName,tableContents):
   sparkDF = spark.createDataFrame(tableContents)
   sparkDF.write.format("delta").option("mergeSchema", "true").mode("append").option("delta.columnMapping.mode", "name").option('delta.minReaderVersion', '2').option('delta.minWriterVersion', '5').save(adlslocation)
-  spark.sql("CREATE TABLE if not exists {}.{} USING DELTA LOCATION '{}' WITH (CREDENTIAL `difscaedifdunitycatalog`)".format(dbParameters['database'],tableName,adlslocation))
+  spark.sql("CREATE TABLE if not exists {}.{} USING DELTA LOCATION '{}' WITH (CREDENTIAL ``)".format(dbParameters['database'],tableName,adlslocation))
 
 # COMMAND ----------
 
